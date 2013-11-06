@@ -45,6 +45,10 @@ static char g_istr[4];
 
 static char logtbl_explained[256] = {0};
 
+// xor-key encryption stuff
+static unsigned char g_xor_key[32];
+static unsigned int g_xor_key_idx;
+
 //
 // Log API
 //
@@ -89,6 +93,13 @@ static void log_raw(const char *buf, size_t length) {
 static void log_raw_direct(const char *buf, size_t length) {
     int sent = 0;
     int r;
+
+    // the bson buffer doesn't really have to be constant :p
+    unsigned char *p = (unsigned char *) buf;
+    for (size_t i = 0; i < length; i++) {
+        p[i] ^= g_xor_key[g_xor_key_idx++ % ARRAYSIZE(g_xor_key)];
+    }
+
     while (sent < length) {
         r = send(g_sock, buf+sent, length-sent, 0);
         if (r == -1) {
@@ -477,7 +488,8 @@ void announce_netlog()
     char protoname[32];
     strcpy(protoname, "BSON\n");
     //sprintf(protoname+5, "logs/%lu.bson\n", GetCurrentProcessId());
-    log_raw_direct(protoname, strlen(protoname));
+    //log_raw_direct(protoname, strlen(protoname));
+    send(g_sock, protoname, strlen(protoname), 0);
 }
 
 void log_new_process()
@@ -502,7 +514,8 @@ void log_new_thread()
     loq(1, "__thread__", 1, 0, "l", "ProcessIdentifier", GetCurrentProcessId());
 }
 
-void log_init(unsigned int ip, unsigned short port, int debug)
+void log_init(unsigned int ip, unsigned short port,
+    unsigned char *xor_key, int debug)
 {
     InitializeCriticalSection(&g_mutex);
 
@@ -523,6 +536,8 @@ void log_init(unsigned int ip, unsigned short port, int debug)
 
         connect(g_sock, (struct sockaddr *) &addr, sizeof(addr));
     }
+
+    memcpy(g_xor_key, xor_key, ARRAYSIZE(g_xor_key));
 
     announce_netlog();
     log_new_process();

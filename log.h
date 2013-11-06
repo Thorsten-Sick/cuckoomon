@@ -57,7 +57,8 @@ void loq(int index, const char *name, int is_success, int return_value, const ch
 void log_new_process();
 void log_new_thread();
 
-void log_init(unsigned int ip, unsigned short port, int debug);
+void log_init(unsigned int ip, unsigned short port,
+    unsigned char *xor_key, int debug);
 void log_flush();
 void log_free();
 

@@ -71,6 +71,10 @@ void read_config()
                 else if(!strcmp(key, "host-port")) {
                     g_config.host_port = atoi(value);
                 }
+                else if(!strcmp(key, "xor-key")) {
+                    memcpy(g_config.xor_key, value,
+                        ARRAYSIZE(g_config.xor_key));
+                }
             }
         }
         fclose(fp);

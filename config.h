@@ -38,6 +38,8 @@ struct {
     // server ip and port
     unsigned int host_ip;
     unsigned short host_port;
+
+    unsigned char xor_key[32];
 } g_config;
 
 void read_config();
